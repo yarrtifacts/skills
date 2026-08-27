@@ -1,5 +1,5 @@
 /**
- * Wire core of the publish-yarrtifact skill: init → PUT files → finalize against the
+ * Wire core of the publish skill: init → PUT files → finalize against the
  * yarrtifacts.com API, authorized by a Bearer PAT. Pure JS with an injectable fetch —
  * no node imports — so the product repo CI runs this exact file against the real app
  * and the published skill can never drift from the server contract.

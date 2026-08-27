@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * publish-yarrtifact CLI shell: walks a folder (or takes one file), then hands the wire work to
+ * publish CLI shell: walks a folder (or takes one file), then hands the wire work to
  * upload-core.mjs. Node >= 18 (global fetch), zero dependencies.
  *
  * Output contract for agents:

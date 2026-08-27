@@ -1,6 +1,6 @@
 {
   "name": "yarrtifacts",
   "description": "Publish local folders and files as shareable web pages on yarrtifacts.com straight from your agent — get a link back, update it in place later.",
-  "version": "0.11.1",
+  "version": "0.12.0",
   "author": { "name": "Dmitry Yukhanov" }
 }

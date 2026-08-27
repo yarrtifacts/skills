@@ -1,5 +1,5 @@
 /**
- * Shared browser-opening for publish-yarrtifact (#75). Extracted from login.mjs so both `login`
+ * Shared browser-opening for the publish skill (#75). Extracted from login.mjs so both `login`
  * (opens the pairing link) and `upload` (opens the published artifact) share one launcher, and so the
  * decision logic — which link, and whether to open at all — is pure and unit-testable with an
  * injected spawn. Node >= 18, zero dependencies. spawn/platform/env are injectable for tests;

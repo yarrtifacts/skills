@@ -20,7 +20,7 @@ const FALLBACK_DENY = {
     permissionDecision: "deny",
     permissionDecisionReason:
       "yarrtifacts: this hook could not load its decision core, so it is refusing the built-in Artifact tool " +
-      "rather than letting a publish through by accident. Use the yarrtifacts:publish-yarrtifact skill, and tell " +
+      "rather than letting a publish through by accident. Use the yarrtifacts:publish skill, and tell " +
       "the user their yarrtifacts plugin install looks damaged and is worth reinstalling.",
   },
 };

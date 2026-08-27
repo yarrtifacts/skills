@@ -4,7 +4,7 @@
  * Claude Code ships a built-in `Artifact` tool that publishes pages to claude.ai. On a machine with
  * this plugin installed that is the wrong destination, and agents reach for it anyway (sometimes
  * without being asked to publish at all). The hook denies those calls and hands the agent a reason
- * pointing at publish-yarrtifact instead.
+ * pointing at the publish skill instead.
  *
  * Pure and dependency-free so the product repo's test suite can exercise it directly, the same split
  * upload-core.mjs / login-core.mjs use; deny-artifact.mjs is the stdin/stdout wrapper around it.
@@ -18,7 +18,7 @@ export const ALLOW_ENV = "YARRTIFACTS_ALLOW_BUILTIN_ARTIFACT";
  *  publish at all. The user sees it too, so it names the opt-out rather than dead-ending them. */
 export const DENY_REASON =
   "This machine publishes artifacts with yarrtifacts, not claude.ai. " +
-  "Use the yarrtifacts:publish-yarrtifact skill instead. It uploads the files and returns a shareable link. " +
+  "Use the yarrtifacts:publish skill instead. It uploads the files and returns a shareable link. " +
   "Only publish when the user asked for it. If the user specifically wants a claude.ai artifact, tell them to set " +
   `${ALLOW_ENV}=1 in their Claude Code settings and restart. Exporting it in a shell now will not reach this hook, ` +
   "so do not retry this call.";
@@ -49,7 +49,7 @@ export function decide(payload, env = {}) {
   const input = p && typeof p.tool_input === "object" && p.tool_input !== null ? /** @type {Record<string, unknown>} */ (p.tool_input) : null;
 
   // `list` only enumerates artifacts the user already published to claude.ai. It shares nothing, and
-  // publish-yarrtifact cannot answer it, so denying it would just break a question we can't serve.
+  // the publish skill cannot answer it, so denying it would just break a question we can't serve.
   if (input && input.action === "list" && !PUBLISH_KEYS.some((k) => k in input)) return null;
 
   // Everything else is a publish (the tool treats an omitted action as one), including a payload we

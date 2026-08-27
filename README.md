@@ -11,7 +11,7 @@ Run `login`. It opens a page in your browser, you click Allow, and it saves a to
 copy-pasting.
 
 ```bash
-node skills/publish-yarrtifact/scripts/login.mjs
+node skills/publish/scripts/login.mjs
 ```
 
 The token is saved to `~/.config/yarrtifacts/config.json` and used automatically on every upload.
@@ -44,7 +44,7 @@ export YARRTIFACTS_TOKEN=yarr_pat_…
 npx skills add yarrtifacts/skills
 ```
 
-**Manual** — copy `skills/publish-yarrtifact/` into your agent's skills directory:
+**Manual** — copy `skills/publish/` into your agent's skills directory:
 
 | Agent | Directory |
 |---|---|
@@ -55,10 +55,17 @@ npx skills add yarrtifacts/skills
 
 ## Use
 
-Ask your agent to "publish this folder as an artifact" (or run it yourself):
+Ask your agent to "publish this folder as an artifact". In Claude Code it is also a slash command,
+and everything a publish needs fits on the one line:
+
+```
+/yarrtifacts:publish ./report "Q3 report" private
+```
+
+Or run it yourself:
 
 ```bash
-node skills/publish-yarrtifact/scripts/upload.mjs ./report --title "Q3 report"
+node skills/publish/scripts/upload.mjs ./report --title "Q3 report"
 # → https://q3-report.arrtifacts.com/
 ```
 
@@ -68,14 +75,14 @@ Add `--no-open` to suppress it. Opening is best effort, so a machine with no bro
 Update it later without changing the link:
 
 ```bash
-node skills/publish-yarrtifact/scripts/upload.mjs ./report --replace <artifactId>
+node skills/publish/scripts/upload.mjs ./report --replace <artifactId>
 ```
 
 Rename an artifact, or move its link, without re-uploading:
 
 ```bash
-node skills/publish-yarrtifact/scripts/upload.mjs --edit <artifactId> --title "New title"
-node skills/publish-yarrtifact/scripts/upload.mjs --edit <artifactId> --slug new-slug
+node skills/publish/scripts/upload.mjs --edit <artifactId> --title "New title"
+node skills/publish/scripts/upload.mjs --edit <artifactId> --slug new-slug
 ```
 
 Changing the slug moves the public link right away, and the old one stops working. Worth checking
@@ -87,16 +94,16 @@ DNS gets skipped). If you have two or more, mark one as the primary in the dashb
 automatically everywhere — nothing to set here. Or pick which one the CLI uses by default per-run:
 
 ```bash
-node skills/publish-yarrtifact/scripts/upload.mjs --default-domain <hostname>
+node skills/publish/scripts/upload.mjs --default-domain <hostname>
 ```
 
 No Node.js? The REST flow is four curl calls — see
-[`skills/publish-yarrtifact/references/api.md`](skills/publish-yarrtifact/references/api.md).
+[`skills/publish/references/api.md`](skills/publish/references/api.md).
 
 ## Keeping agents off built-in artifact tools
 
 Claude Code ships its own `Artifact` tool that publishes to claude.ai. With this plugin enabled, a
-hook intercepts that tool and points the agent back at `publish-yarrtifact`, so "publish this" lands
+hook intercepts that tool and points the agent back at `yarrtifacts:publish`, so "publish this" lands
 on your own domain. Listing existing claude.ai artifacts still works; only publishing gets
 redirected.
 

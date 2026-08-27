@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * `login` subcommand for publish-yarrtifact (#52): connect this machine to a yarrtifacts.com account
+ * `login` subcommand for the publish skill (#52): connect this machine to a yarrtifacts.com account
  * without pasting a token. Requests a pairing code, opens the approve link in the browser, and once
  * the owner clicks Allow, stores the returned scoped token in ~/.config/yarrtifacts/config.json.
  * Node >= 18 (global fetch), zero dependencies.

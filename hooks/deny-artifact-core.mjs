@@ -25,10 +25,20 @@ export const DENY_REASON =
 
 const TRUTHY = new Set(["1", "true", "yes", "on"]);
 
-/** Parameters that only ever belong to a publish. `action:"list"` is allowed through, so if the tool
- *  schema ever grows a shape where a list call can also carry content, that allowance must not
- *  become the bypass. Keyed on the publish side, since the list params are the smaller, safer set. */
-const PUBLISH_KEYS = ["file_path", "url", "content", "capabilities"];
+/** Actions that READ an artifact already on claude.ai and send it nothing. Denying these dead-ends a
+ *  question instead of protecting anything: the publish skill cannot answer "what do the comments on
+ *  this say" either, and the artifact may not even be the user's -- claude.ai lists ones other people
+ *  shared with them. Read vs write is the line, not publish vs not: `upload_asset` pushes a local
+ *  file and is a publish under another name, `reply` and `resolve` write into the vendor's copy, and
+ *  all three stay denied by falling through to the bottom of decide(). */
+const READ_ONLY_ACTIONS = new Set(["list", "comments", "list_assets", "read_asset"]);
+
+/** Parameters that can carry a page, so their presence outranks whatever the call labels itself.
+ *  The read allowance above is the one hole in an otherwise total deny and the schema it trusts is
+ *  not ours; requiring the absence of these keeps a future schema change from widening it. `url`
+ *  is deliberately NOT here -- it names which artifact to read and cannot carry content, and every
+ *  read-only action except a bare `list` needs it. */
+const PUBLISH_KEYS = ["file_path", "content", "capabilities"];
 
 /**
  * Decide what to do with one PreToolUse payload.
@@ -48,9 +58,8 @@ export function decide(payload, env = {}) {
 
   const input = p && typeof p.tool_input === "object" && p.tool_input !== null ? /** @type {Record<string, unknown>} */ (p.tool_input) : null;
 
-  // `list` only enumerates artifacts the user already published to claude.ai. It shares nothing, and
-  // the publish skill cannot answer it, so denying it would just break a question we can't serve.
-  if (input && input.action === "list" && !PUBLISH_KEYS.some((k) => k in input)) return null;
+  if (input && typeof input.action === "string" && READ_ONLY_ACTIONS.has(input.action)
+      && !PUBLISH_KEYS.some((k) => k in input)) return null;
 
   // Everything else is a publish (the tool treats an omitted action as one), including a payload we
   // couldn't parse: an unreadable call to a publishing tool is not evidence that it was harmless.

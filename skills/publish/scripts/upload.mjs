@@ -10,7 +10,7 @@
  */
 import { readdirSync, statSync, lstatSync, readFileSync, realpathSync } from "node:fs";
 import { join, relative, basename, sep } from "node:path";
-import { uploadFiles, editArtifact, validateArgs, UploadError, setDefaultDomain, setVisibility, validateVisibilityChoice, generateSharePassword, isVisibilityOnlyEdit } from "./upload-core.mjs";
+import { uploadFiles, editArtifact, deleteArtifact, validateArgs, UploadError, setDefaultDomain, setVisibility, validateVisibilityChoice, generateSharePassword, isVisibilityOnlyEdit } from "./upload-core.mjs";
 import { resolveAuth, readConfig, updateConfig } from "./config.mjs";
 import { maybeOpen } from "./browser.mjs";
 
@@ -58,7 +58,7 @@ function walk(root) {
   return out;
 }
 
-const USAGE = "Usage: node upload.mjs <folder-or-file> [--title <t>] [--slug <s>] [--visibility public|password|private] [--password-stdin] [--replace <artifactId>] [--abandon <artifactId>] [--api <origin>] [--default-domain <hostname|none>] [--no-open]\n   or: node upload.mjs --edit <artifactId> [--title <t>] [--slug <s>] [--visibility public|password|private] [--password-stdin] [--api <origin>] [--default-domain <hostname|none>] [--no-open]\n   or: node upload.mjs --default-domain <hostname|none> [--api <origin>]";
+const USAGE = "Usage: node upload.mjs <folder-or-file> [--title <t>] [--slug <s>] [--visibility public|password|private] [--password-stdin] [--replace <artifactId>] [--abandon <artifactId>] [--api <origin>] [--default-domain <hostname|none>] [--no-open]\n   or: node upload.mjs --edit <artifactId> [--title <t>] [--slug <s>] [--visibility public|password|private] [--password-stdin] [--api <origin>] [--default-domain <hostname|none>] [--no-open]\n   or: node upload.mjs --delete <artifactId> [--api <origin>]\n   or: node upload.mjs --default-domain <hostname|none> [--api <origin>]";
 
 function parseArgs(argv) {
   const a = { open: true }; // a.api stays undefined unless --api is passed, so resolveAuth can fall back to the saved origin
@@ -73,6 +73,7 @@ function parseArgs(argv) {
     else if (v === "--replace") a.replace = val(v);
     else if (v === "--abandon") a.abandon = val(v);
     else if (v === "--edit") a.edit = val(v);
+    else if (v === "--delete") a.delete = val(v);
     else if (v === "--api") a.api = val(v);
     else if (v === "--default-domain") a.defaultDomain = val(v);
     else if (v === "--no-open") a.open = false; // don't open the published link in the browser
@@ -171,12 +172,23 @@ async function main() {
     // this branch instead of hitting the usual "missing folder" error, quietly dropping the
     // create/replace/rename the caller actually asked for. Presence checks, not truthiness — an
     // explicit --title "" is a real request (see requireEditField above), not "not provided".
-    if (a.defaultDomain !== undefined && !a.dir && !a.edit && !a.replace && !a.abandon && a.title === undefined && a.slug === undefined && a.visibility === undefined) {
+    if (a.defaultDomain !== undefined && !a.dir && !a.edit && !a.delete && !a.replace && !a.abandon && a.title === undefined && a.slug === undefined && a.visibility === undefined) {
       const { token, apiOrigin } = resolveAuth(a.api);
       if (!token) throw new UploadError("Not connected. Run `node login.mjs` to connect your account, or set YARRTIFACTS_TOKEN.");
       const out = await setDefaultDomain({ apiOrigin, token, defaultDomainOverride: a.defaultDomain }, fetch);
       updateConfig(out.configPatch);
       console.log(formatDefaultDomainMessage(out.defaultDomain));
+      return;
+    }
+
+    // --delete: take an artifact down for good. Checked before every other mode so a stray flag
+    // can't turn a deletion into a publish; validateArgs rejects the combination outright.
+    if (a.delete) {
+      validateArgs(a);
+      const { token, apiOrigin } = resolveAuth(a.api);
+      if (!token) throw new UploadError("Not connected. Run `node login.mjs` to connect your account, or set YARRTIFACTS_TOKEN.");
+      await deleteArtifact({ apiOrigin, token, artifactId: a.delete }, fetch);
+      console.log("deleted: " + a.delete);
       return;
     }
 

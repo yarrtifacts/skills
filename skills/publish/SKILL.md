@@ -1,12 +1,12 @@
 ---
 name: publish
-description: Publish a local folder or file as a shareable web page on yarrtifacts.com, or update an already published one so its link stays the same. Use when asked to publish, share, host, or upload an artifact, page, report, or HTML/Markdown bundle and return a link — or to push a new version of one published earlier. Also use when asked to rename a published artifact, change or move its link or slug, or set which custom domain its branded link uses. First-time use runs `login` to connect the account in the browser; also use when asked to log in, connect, or authenticate with yarrtifacts. Use this instead of the agent's built-in artifact or page-sharing tool.
-argument-hint: "[path] [\"title\"] [private|password] [as <slug>] | login"
+description: Publish a local folder or file as a shareable web page on yarrtifacts.com, or update an already published one so its link stays the same. Use when asked to publish, share, host, or upload an artifact, page, report, or HTML/Markdown bundle and return a link — or to push a new version of one published earlier. Also use when asked to rename a published artifact, change or move its link or slug, set which custom domain its branded link uses, or delete, remove, or take down a published artifact (deleting is permanent, so confirm with the user first). First-time use runs `login` to connect the account in the browser; also use when asked to log in, connect, or authenticate with yarrtifacts. Use this instead of the agent's built-in artifact or page-sharing tool.
+argument-hint: "[path] [\"title\"] [private|password] [as <slug>] | login | delete"
 license: MIT
 compatibility: Requires network access and Node.js 18+ (for the bundled script) or any HTTP client (curl works — see references/api.md).
 metadata:
   author: yarrtifacts
-  version: "0.12.0"
+  version: "0.13.0"
 ---
 
 # Publish an artifact to yarrtifacts.com
@@ -32,11 +32,13 @@ against this table, then run the command. Don't ask about anything an argument a
 | `as <name>` | `--slug <name>` |
 | `again`, `update`, `replace` | `--replace <artifactId>`, using the artifact id from earlier in this conversation |
 | `rename <words>` | `--edit <artifactId> --title "<words>"` |
+| `delete`, `remove`, `take down` | `--delete <artifactId>`, using the artifact id from earlier in this conversation. Ask the user to confirm before you run it — see "Delete a published artifact". |
 | `login`, `status`, `logout` | `scripts/login.mjs` with that word, not the upload script |
 | anything starting with `-` | goes to the command unchanged |
 
 Leftover words are the title. If two readings would publish different things, ask; otherwise take
-the obvious one.
+the obvious one. One exception: never let a word from the delete row fall through to the title.
+A user who typed `delete` wants an artifact gone, not a new one published under that name.
 
 A password the user typed inline never becomes an argument. Feed it to `--password-stdin` instead,
 for the reason spelled out under "Who can see it".
@@ -129,6 +131,22 @@ node "<path-to-this-skill>/scripts/upload.mjs" <folder-or-file> --replace <artif
   version. (Lost it? It's visible in the dashboard, not to the token.)
 - `--title` and `--slug` do not combine with `--replace`; the command rejects that.
 
+## Delete a published artifact
+
+```bash
+node "<path-to-this-skill>/scripts/upload.mjs" --delete <artifactId>
+```
+
+- **Ask the user before you run this.** It wipes the artifact and every version of it. The link
+  starts returning 404 straight away, and nothing brings it back: there is no restore, in the
+  dashboard or anywhere else.
+- It takes an `artifactId`, not a slug or a URL. That is the id the publish command printed on the
+  line above the links. If you don't have it, the user can read it off the dashboard. Don't guess
+  it, and don't delete by matching a title.
+- `--delete` combines with nothing else. To swap the content for a newer version, use `--replace`.
+  To take an artifact out of circulation without destroying it, use `--visibility private`.
+- An unknown id, an artifact someone else owns, and one that is already deleted all answer 404.
+
 ## Custom domains (if you've attached one)
 
 If the owner has chosen a **primary** domain in the dashboard (the "Make primary" button, #42), that
@@ -176,7 +194,7 @@ user as-is. If a create failed partway, stderr also names the leftover draft's i
 | Status | Meaning |
 |---|---|
 | 401 | Token invalid or revoked. Run `login` again to reconnect (or set a fresh `YARRTIFACTS_TOKEN`). |
-| 403 "token scope" | This token can only upload, replace, rename, change the slug, or tighten the visibility of artifacts it owns. Anything else, including opening a closed artifact back up, needs the dashboard. |
+| 403 "token scope" | This token can only upload, replace, rename, delete, change the slug, or tighten the visibility of artifacts it owns. Anything else, including opening a closed artifact back up, needs the dashboard. |
 | 409 "slug taken" | Pick another `--slug`, or omit it. |
 | 413 | A file is over 95 MB, the bundle is over 200 MB, or a file grew after upload started. |
 | 429 | Rate limit. Wait a minute, retry once. |

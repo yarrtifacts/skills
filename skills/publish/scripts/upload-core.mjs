@@ -37,6 +37,14 @@ function requireEditField(title, slug, hasDomainOverride, hasVisibility) {
  *  --default-domain (#64) alone (no --title/--slug) is also a valid --edit — it just resolves and
  *  saves the default-domain preference against this artifact without touching its metadata. */
 export function validateArgs(args) {
+  if (args.delete) {
+    // Deliberately exclusive: a `--delete <id>` that also carried a folder or an --edit field would
+    // leave the caller guessing whether the upload happened before or after the artifact vanished.
+    if (args.edit || args.replace || args.abandon || args.dir || args.title !== undefined || args.slug !== undefined || args.visibility !== undefined || args.defaultDomain !== undefined) {
+      throw new UploadError("--delete stands alone: it removes an artifact for good, so it does not combine with a folder, --edit, --replace, --title, --slug, --visibility, or --default-domain.");
+    }
+    return;
+  }
   if (args.edit) {
     if (args.replace || args.abandon || args.dir) {
       throw new UploadError("--edit only combines with --title and/or --slug (it edits an existing artifact's metadata, no re-upload). Remove --replace, --abandon, or the folder path.");
@@ -108,6 +116,17 @@ export async function setVisibility(opts, fetchImpl) {
     method: "POST", headers: authHeaders(token, true), body: JSON.stringify(body),
   });
   return { visibility: j.visibility || visibility, ...(visibility === "password" ? { password } : {}) };
+}
+
+/** Delete an artifact permanently. The link stops serving immediately and the content is wiped —
+ *  there is no undo and no restore, so the CALLER is responsible for having asked the human first.
+ *  Owner-scoped server-side: someone else's id answers 404, never a delete. */
+export async function deleteArtifact(opts, fetchImpl) {
+  const { token, artifactId } = opts;
+  const apiOrigin = normalizeOrigin(opts.apiOrigin);
+  await request(fetchImpl, apiOrigin + "/api/artifacts/" + encodeURIComponent(artifactId) + "/delete", {
+    method: "POST", headers: authHeaders(token),
+  });
 }
 
 /** Actual byte length of a PUT body (utf-8 for strings). Sent as an explicit Content-Length so the

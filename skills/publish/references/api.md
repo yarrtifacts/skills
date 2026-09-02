@@ -3,7 +3,7 @@
 Base: `https://yarrtifacts.com`. Uploads carry `Authorization: Bearer <token>` — a personal access
 token (`yarr_pat_…`). Get one either from the **API tokens** tab, or via the `login` pairing flow
 below (which mints the same kind of token). Tokens can call the routes documented below (upload,
-replace, rename, slug-edit, and visibility in the tightening direction only); anything else answers
+replace, rename, slug-edit, delete, and visibility in the tightening direction only); anything else answers
 `403 {"error":"token scope"}` (except the two read-only routes: `GET /api/tokens/whoami` and
 `GET /api/domains`).
 
@@ -24,6 +24,13 @@ version inherits the artifact's own visibility, so there is no open window to cl
 first would rotate its share password, killing the secret its viewers hold, for a version that may
 still fail to upload. To close an artifact that is currently public and replace its content, close
 it first, then replace.
+
+## Delete
+
+`POST /api/artifacts/{artifactId}/delete`, no body, `→ 200 {"ok":true}`. Owner-scoped: an id the
+token's owner does not hold answers `404 {"error":"unknown artifact"}`, and so does one already
+deleted, which makes a retry safe. The link stops serving at once and the stored bundle is wiped,
+so this is not reversible. Rate-limited on the same per-owner budget as rename and slug-edit.
 
 ## Login (device pairing)
 

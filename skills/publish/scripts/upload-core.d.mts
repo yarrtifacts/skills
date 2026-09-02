@@ -77,7 +77,7 @@ export function resolveDomainSelection(
 export function validateDefaultDomainChoice(choice: string, activeHostnames: string[]): string;
 
 export function formatFailure(status: number, body: { message?: string; error?: string } | null | undefined): string;
-export function validateArgs(args: { replace?: string; title?: string; slug?: string; abandon?: string; edit?: string; dir?: string; defaultDomain?: string; visibility?: string }): void;
+export function validateArgs(args: { replace?: string; title?: string; slug?: string; abandon?: string; edit?: string; dir?: string; defaultDomain?: string; visibility?: string; delete?: string }): void;
 export function encodePath(rel: string): string;
 export function bodyByteLength(body: string | Uint8Array): number;
 export function uploadFiles(
@@ -110,3 +110,9 @@ export function setVisibility(
   opts: { apiOrigin: string; token: string; artifactId: string; visibility: Visibility; password?: string },
   fetchImpl: (url: string, init?: RequestInit) => Promise<Response>,
 ): Promise<{ visibility: Visibility; password?: string }>;
+
+/** Permanent, no undo: the link stops serving and the content is wiped. Owner-scoped server-side. */
+export function deleteArtifact(
+  opts: { apiOrigin: string; token: string; artifactId: string },
+  fetchImpl: (url: string, init?: RequestInit) => Promise<Response>,
+): Promise<void>;

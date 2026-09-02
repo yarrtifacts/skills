@@ -17,10 +17,10 @@ node skills/publish/scripts/login.mjs
 The token is saved to `~/.config/yarrtifacts/config.json` and used automatically on every upload.
 `login status` checks it's still good; `login logout` forgets it.
 
-A token can only upload, replace, rename, change the slug, or tighten the visibility of artifacts it owns.
+A token can only upload, replace, rename, delete, change the slug, or tighten the visibility of artifacts it owns.
 Tightening is one-way: a token can make an artifact password-protected or private, but only the dashboard
-can open one back up. Everything else, including deleting and domain setup, stays in the dashboard, where
-you can also revoke the token any time.
+can open one back up. Deleting is permanent and has no undo, so an agent should ask you before it does that.
+Everything else, including domain setup, stays in the dashboard, where you can also revoke the token any time.
 
 **CI or no browser?** Create a token in the dashboard (**API tokens** → Create token) and set it as
 an environment variable — it takes precedence over the saved login:
@@ -89,6 +89,12 @@ Changing the slug moves the public link right away, and the old one stops workin
 first if you already shared it. You can pass both flags at once, but the rename lands first, so a
 slug that turns out to be taken leaves the new title already applied.
 
+Delete an artifact for good. Nothing brings it back, so an agent should ask you before it runs this:
+
+```bash
+node skills/publish-yarrtifact/scripts/upload.mjs --delete <artifactId>
+```
+
 Once a custom domain is active, the branded link comes back automatically (a domain still waiting on
 DNS gets skipped). If you have two or more, mark one as the primary in the dashboard and it's used
 automatically everywhere — nothing to set here. Or pick which one the CLI uses by default per-run:
@@ -104,8 +110,11 @@ No Node.js? The REST flow is four curl calls — see
 
 Claude Code ships its own `Artifact` tool that publishes to claude.ai. With this plugin enabled, a
 hook intercepts that tool and points the agent back at `yarrtifacts:publish`, so "publish this" lands
-on your own domain. Listing existing claude.ai artifacts still works; only publishing gets
-redirected.
+on your own domain. Reading existing claude.ai artifacts still works -- listing them, reading their
+comments and their attached files -- because the redirect cannot answer those questions either,
+and some of those artifacts are ones other people shared with you. Anything that writes to
+claude.ai gets redirected: publishing, uploading a file to an artifact, and replying to or
+resolving a comment thread.
 
 If you want a claude.ai artifact now and then, start Claude Code with the opt-out set:
 

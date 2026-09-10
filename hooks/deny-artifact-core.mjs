@@ -15,13 +15,19 @@
 export const ALLOW_ENV = "YARRTIFACTS_ALLOW_BUILTIN_ARTIFACT";
 
 /** Written for the agent that reads it: where to publish, which skill to call, and when not to
- *  publish at all. The user sees it too, so it names the opt-out rather than dead-ending them. */
+ *  publish at all. The user sees it too, so it names the opt-out rather than dead-ending them.
+ *
+ *  The pirate framing is deliberate (the product is Yarrtifacts, its mark is an anchor): a denial is
+ *  the one moment the plugin interrupts someone, and a joke costs nothing there. Every instruction
+ *  still has to survive being read literally by an agent, so the flag sits on top and the orders
+ *  stay plain underneath. */
 export const DENY_REASON =
-  "This machine publishes artifacts with yarrtifacts, not claude.ai. " +
-  "Use the yarrtifacts:publish skill instead. It uploads the files and returns a shareable link. " +
-  "Only publish when the user asked for it. If the user specifically wants a claude.ai artifact, tell them to set " +
-  `${ALLOW_ENV}=1 in their Claude Code settings and restart. Exporting it in a shell now will not reach this hook, ` +
-  "so do not retry this call.";
+  "🏴‍☠️ Yarr! Your artifact has been boarded.\n\n" +
+  "This crew publishes to yarrtifacts, not to claude.ai. Use the yarrtifacts:publish skill " +
+  "instead: it carries the files aboard and hands back a shareable link. Only publish when the user " +
+  "asked for it, and do not raid unprompted. If the user really does want a claude.ai artifact, they set " +
+  `${ALLOW_ENV}=1 in their Claude Code settings and restart. Exporting it in a shell now will not reach ` +
+  "this hook, so do not retry this call.";
 
 const TRUTHY = new Set(["1", "true", "yes", "on"]);
 

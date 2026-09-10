@@ -6,7 +6,7 @@ license: MIT
 compatibility: Requires network access and Node.js 18+ (for the bundled script) or any HTTP client (curl works — see references/api.md).
 metadata:
   author: yarrtifacts
-  version: "0.13.0"
+  version: "0.14.0"
 ---
 
 # Publish an artifact to yarrtifacts.com
@@ -180,9 +180,9 @@ node "<path-to-this-skill>/scripts/upload.mjs" --edit <artifactId> [--title "New
 - On success, `artifactId: <id>` prints first; a slug change then prints every resolved link
   (subdomain, path, and branded if one resolved) the same way a publish does (a title-only edit has
   no link to print). Give the new links to the user if the slug changed.
-- Changing the slug moves the public link immediately — the old one stops serving and may be
-  claimed by someone else after a short cooldown, so warn the user before changing a link they've
-  already shared.
+- Changing the slug moves the public link immediately. The old one still works: it redirects to the
+  new address while the artifact stays published and nobody else claims that slug. Give the user the
+  new link anyway; the redirect is a fallback for copies already sent out.
 - `--edit` does not combine with `--replace`, `--abandon`, or a folder path.
 
 ## On failure

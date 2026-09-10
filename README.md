@@ -85,9 +85,10 @@ node skills/publish/scripts/upload.mjs --edit <artifactId> --title "New title"
 node skills/publish/scripts/upload.mjs --edit <artifactId> --slug new-slug
 ```
 
-Changing the slug moves the public link right away, and the old one stops working. Worth checking
-first if you already shared it. You can pass both flags at once, but the rename lands first, so a
-slug that turns out to be taken leaves the new title already applied.
+Changing the slug moves the public link right away. The old one keeps working: it redirects to the
+new address as long as the artifact is published and nobody else has claimed that slug. You can pass
+both flags at once, but the rename lands first, so a slug that turns out to be taken leaves the new
+title already applied.
 
 Delete an artifact for good. Nothing brings it back, so an agent should ask you before it runs this:
 
@@ -115,6 +116,8 @@ comments and their attached files -- because the redirect cannot answer those qu
 and some of those artifacts are ones other people shared with you. Anything that writes to
 claude.ai gets redirected: publishing, uploading a file to an artifact, and replying to or
 resolving a comment thread.
+
+The refusal arrives under a pirate flag, which is the plugin working, not something breaking.
 
 If you want a claude.ai artifact now and then, start Claude Code with the opt-out set:
 

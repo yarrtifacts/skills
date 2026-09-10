@@ -134,8 +134,9 @@ Content-Type: application/json
 telling the user the new link is live.
 
 Call either or both — they're independent requests, not one atomic operation. Changing the slug
-moves the public link immediately; the old one 404s and can be claimed by another artifact after a
-short cooldown, so warn the user before changing a link they've already shared.
+moves the public link immediately. The old one 301s to the new address while the artifact stays
+published; if another artifact later claims that slug, it serves instead and the redirect stops.
+Give the user the new link either way.
 
 ## Custom domains
 

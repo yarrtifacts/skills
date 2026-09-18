@@ -31,13 +31,48 @@ export const DENY_REASON =
 
 const TRUTHY = new Set(["1", "true", "yes", "on"]);
 
-/** Actions that READ an artifact already on claude.ai and send it nothing. Denying these dead-ends a
- *  question instead of protecting anything: the publish skill cannot answer "what do the comments on
- *  this say" either, and the artifact may not even be the user's -- claude.ai lists ones other people
- *  shared with them. Read vs write is the line, not publish vs not: `upload_asset` pushes a local
- *  file and is a publish under another name, `reply` and `resolve` write into the vendor's copy, and
- *  all three stay denied by falling through to the bottom of decide(). */
-const READ_ONLY_ACTIONS = new Set(["list", "comments", "list_assets", "read_asset"]);
+/** Per tool, the actions that READ something already on claude.ai and send it nothing. Denying those
+ *  dead-ends a question instead of protecting anything: the publish skill cannot answer "what do the
+ *  comments on this say" either, and the artifact may not even be the user's -- claude.ai lists ones
+ *  other people shared with them. Read vs write is the line, not publish vs not: an action belongs
+ *  here if it does not PUT anything on claude.ai -- no page, no file, no row, no subscription.
+ *
+ *  WHAT THIS HOOK IS NOT: a data-egress boundary. Every read action names what to read, and a name
+ *  is a string an agent could fill with a document instead -- a `where` filter, a paging cursor, a
+ *  collection path. Chasing that would end with an empty allowlist, and it would buy nothing: an
+ *  agent set on sending bytes somewhere has Bash and a network. This hook decides WHERE published
+ *  work lands, and the honest guarantee is the one above.
+ *
+ *  THE KEYS ARE THE WHOLE TOOL LIST, and keeping them current is the maintenance this file has.
+ *  Claude Code has since split what used to be `Artifact` actions across top-level tools, and the
+ *  deny only ever saw the first one — which is how README.md's promise that replying to a comment
+ *  thread gets redirected quietly stopped being true. The matcher in hooks.json is a regex over the
+ *  whole family so a new sibling reaches this function; a tool missing from this map is passed
+ *  through, so a sibling that appears later is visible but unguarded until someone adds it.
+ *
+ *  The family is FOUR tools, not the three below. `ArtifactCheck` is the deliberate omission: its
+ *  actions are `verify`, which reads an existing artifact's viewer diagnostics, and `preview`, which
+ *  renders HTML locally into screenshots — neither uploads a page, a file, a row or a comment, so
+ *  there is nothing here to redirect. Listing it with an empty allowance would deny a read tool and
+ *  say nothing true. Checked against the shipped binary in September 2026, which is the only place
+ *  this list exists; it moved from 2.1.274 to 2.1.276 during the hour it took to check, so treat
+ *  every sentence above as perishable and re-read the tool schemas rather than this comment. */
+const READ_ONLY_ACTIONS = {
+  // Writes: publish (with `asset:true` it pushes a LOCAL FILE, a publish under another name),
+  // delete, pin, unpin. `quickstart` is read-only but is step one of publishing, so it falls
+  // through and the agent reads the redirect before it builds anything.
+  Artifact: new Set(["list", "read", "open"]),
+  // Writes: reply and resolve edit the vendor's copy. `watch` is absent because its name does not
+  // settle it -- see the shape check in decide().
+  ArtifactComments: new Set(["read"]),
+  // A published page's own shared database. Writes: set, update, str_replace, delete, batch — and
+  // `set`/`update` accept a local `file_path` whose contents are uploaded, which is this hook's
+  // whole reason to exist arriving under a different tool name. get/list/query are its three reads
+  // and all three are here; `query` was briefly held back because a `where` value is sent to the
+  // server, until the same was true of `list`'s cursor and of the collection path itself — which is
+  // the egress question this hook does not answer. See the header.
+  ArtifactData: new Set(["get", "list", "query"]),
+};
 
 /** Parameters that can carry a page, so their presence outranks whatever the call labels itself.
  *  The read allowance above is the one hole in an otherwise total deny and the schema it trusts is
@@ -58,14 +93,29 @@ export function decide(payload, env = {}) {
 
   const p = payload && typeof payload === "object" ? /** @type {Record<string, unknown>} */ (payload) : null;
 
-  // Only ever speak about the Artifact tool. The matcher already scopes us there, but a hook that
-  // silently denied some other tool because a future matcher edit went wide would be a nasty bug.
-  if (p && typeof p.tool_name === "string" && p.tool_name !== "Artifact") return null;
+  // Only ever speak about the tools named above. The matcher in hooks.json is `Artifact.*`, an
+  // UNANCHORED regex, which is wider on purpose -- a tool the vendor adds tomorrow reaches this
+  // function instead of slipping past a matcher nobody remembered to update -- so THIS is the line
+  // that keeps the hook from denying something it has no opinion about.
+  const tool = p && typeof p.tool_name === "string" ? p.tool_name : null;
+  if (tool !== null && !Object.prototype.hasOwnProperty.call(READ_ONLY_ACTIONS, tool)) return null;
 
   const input = p && typeof p.tool_input === "object" && p.tool_input !== null ? /** @type {Record<string, unknown>} */ (p.tool_input) : null;
 
-  if (input && typeof input.action === "string" && READ_ONLY_ACTIONS.has(input.action)
+  // A payload with no readable tool_name gets no read allowance at all: it reached a matcher that
+  // only fires on these tools, so it is one of them with the name lost, and guessing which would be
+  // guessing in the direction of allowing a publish.
+  const readable = tool === null ? null : READ_ONLY_ACTIONS[tool];
+  if (readable && input && typeof input.action === "string" && readable.has(input.action)
       && !PUBLISH_KEYS.some((k) => k in input)) return null;
+
+  // The one action whose shape, not its name, decides. `watch` with no `url` lists the watches this
+  // session already holds -- local bookkeeping that never leaves the machine. Name a `url` and it
+  // opens a subscription on claude.ai; add `replies` and it re-arms automatic comment replies. So
+  // the bare form is a read and the other two are not, and no allowlist keyed on the action name
+  // alone can say that.
+  if (tool === "ArtifactComments" && input && input.action === "watch"
+      && !("url" in input) && !("replies" in input)) return null;
 
   // Everything else is a publish (the tool treats an omitted action as one), including a payload we
   // couldn't parse: an unreadable call to a publishing tool is not evidence that it was harmless.

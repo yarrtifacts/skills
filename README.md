@@ -93,7 +93,7 @@ title already applied.
 Delete an artifact for good. Nothing brings it back, so an agent should ask you before it runs this:
 
 ```bash
-node skills/publish-yarrtifact/scripts/upload.mjs --delete <artifactId>
+node skills/publish/scripts/upload.mjs --delete <artifactId>
 ```
 
 Once a custom domain is active, the branded link comes back automatically (a domain still waiting on
@@ -114,8 +114,8 @@ hook intercepts that tool and points the agent back at `yarrtifacts:publish`, so
 on your own domain. Reading existing claude.ai artifacts still works -- listing them, reading their
 comments and their attached files -- because the redirect cannot answer those questions either,
 and some of those artifacts are ones other people shared with you. Anything that writes to
-claude.ai gets redirected: publishing, uploading a file to an artifact, and replying to or
-resolving a comment thread.
+claude.ai gets redirected: publishing, uploading a file to an artifact, replying to or resolving a
+comment thread, and writing into a published page's own stored data.
 
 The refusal arrives under a pirate flag, which is the plugin working, not something breaking.
 

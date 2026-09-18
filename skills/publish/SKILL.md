@@ -6,7 +6,7 @@ license: MIT
 compatibility: Requires network access and Node.js 18+ (for the bundled script) or any HTTP client (curl works — see references/api.md).
 metadata:
   author: yarrtifacts
-  version: "0.15.0"
+  version: "0.15.1"
 ---
 
 # Publish an artifact to yarrtifacts.com

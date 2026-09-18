@@ -57,7 +57,20 @@ const TRUTHY = new Set(["1", "true", "yes", "on"]);
  *  say nothing true. Checked against the shipped binary in September 2026, which is the only place
  *  this list exists; it moved from 2.1.274 to 2.1.276 during the hour it took to check, so treat
  *  every sentence above as perishable and re-read the tool schemas rather than this comment. */
-const READ_ONLY_ACTIONS = {
+/** Family members this file has looked at and deliberately has no opinion about, with the reason.
+ *  Data, not prose, because `npm run check:artifact-tools` compares the live tool list against
+ *  KNOWN_TOOLS = these keys plus READ_ONLY_ACTIONS', and a family member in neither is the drift.
+ *  The actions are recorded too: "no opinion" is a judgement about THESE actions, so a passed-through
+ *  tool that grows one has to reach a human the same way a new tool does -- decide() lets every call
+ *  to it straight through, which is exactly why a new action here is the quiet version of the drift. */
+export const PASSED_THROUGH = {
+  ArtifactCheck: {
+    actions: new Set(["verify", "preview"]),
+    reason: "verify reads an artifact's viewer diagnostics and preview renders locally; neither uploads anything, so there is nothing to redirect",
+  },
+};
+
+export const READ_ONLY_ACTIONS = {
   // Writes: publish (with `asset:true` it pushes a LOCAL FILE, a publish under another name),
   // delete, pin, unpin. `quickstart` is read-only but is step one of publishing, so it falls
   // through and the agent reads the redirect before it builds anything.
@@ -72,6 +85,19 @@ const READ_ONLY_ACTIONS = {
   // server, until the same was true of `list`'s cursor and of the collection path itself — which is
   // the egress question this hook does not answer. See the header.
   ArtifactData: new Set(["get", "list", "query"]),
+};
+
+/** The other half of the same ledger: actions looked at and judged to WRITE. All but one are denied
+ *  by falling through READ_ONLY_ACTIONS; `watch` is here because it writes in every form decide()
+ *  refuses, and the bare form it allows is settled by the shape check below, not by this list.
+ *  Denial needs no list to work (anything not allowed is denied), which is exactly why this exists:
+ *  it records that somebody read what the action does. `npm run check:artifact-tools` reports any
+ *  live action in NEITHER list, because that is an action nobody has classified yet, and guessing
+ *  from a name is how `watch` -- which opens a server-side subscription -- reads as a read. */
+export const KNOWN_WRITE_ACTIONS = {
+  Artifact: new Set(["publish", "delete", "pin", "unpin", "quickstart"]),
+  ArtifactComments: new Set(["reply", "resolve", "watch"]),
+  ArtifactData: new Set(["set", "update", "str_replace", "delete", "batch"]),
 };
 
 /** Parameters that can carry a page, so their presence outranks whatever the call labels itself.

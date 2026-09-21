@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * publish CLI shell: walks a folder (or takes one file), then hands the wire work to
- * upload-core.mjs. Node >= 18 (global fetch), zero dependencies.
+ * upload-core.mjs. Node >= 20 (global fetch and crypto), zero dependencies.
  *
  * Output contract for agents:
  *   success → artifactId line, then every resolved share link (subdomain, path, and branded custom
@@ -128,17 +128,23 @@ function resolveVisibilityRequest(a) {
   return { visibility: a.visibility, password, generated };
 }
 
-/** The server keeps only a hash, so a generated password reaches stdout here or never. */
+const WHO_CAN_OPEN = { public: "anyone with the link", password: "anyone with the link and the password", private: "only you, signed in" };
+
+/** The server keeps only a hash, so a generated password reaches stdout here or never. `previous`
+ *  (an --edit or --replace gate) names the move, and tells a password rotation from a first password:
+ *  the wire call is the same, but a rotation kills the secret viewers already hold. */
 function reportVisibility(req) {
   if (!req) return;
   if (req.visibility === "password") {
     console.log("password: " + req.password);
-    console.error(req.generated
-      ? "A share password was generated. Give it to the people who should see this artifact — it cannot be shown again."
-      : "Share password set. It cannot be shown again.");
-  } else {
-    console.error(req.visibility === "private" ? "Visibility: private (only you can open it)." : "Visibility: public.");
+    console.error(req.previous === "password"
+      ? "Share password replaced; the old one no longer opens the artifact. It cannot be shown again."
+      : req.generated
+        ? "A share password was generated. Give it to the people who should see this artifact — it cannot be shown again."
+        : "Share password set. It cannot be shown again.");
   }
+  const move = req.previous && req.previous !== req.visibility ? ", was " + req.previous : "";
+  console.error("Visibility: " + req.visibility + move + " (" + WHO_CAN_OPEN[req.visibility] + ").");
 }
 
 /** Gate an artifact that is already live: `--edit`, and `--replace` once its content has shipped. */
@@ -146,7 +152,7 @@ async function applyVisibility(req, ctxIds) {
   if (!req) return;
   const { token, apiOrigin } = ctxIds;
   const out = await setVisibility({ apiOrigin, token, artifactId: ctxIds.artifactId, visibility: req.visibility, password: req.password }, fetch);
-  reportVisibility({ ...req, visibility: out.visibility });
+  reportVisibility({ ...req, visibility: out.visibility, previous: out.previous });
 }
 
 /** Prints the non-blocking "ambiguous default domain" hint to stderr — never called on a failure

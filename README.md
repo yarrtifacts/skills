@@ -14,12 +14,12 @@ copy-pasting.
 node skills/publish/scripts/login.mjs
 ```
 
-The token is saved to `~/.config/yarrtifacts/config.json` and used automatically on every upload.
+The token is saved to `~/.config/yarrtifacts/config.json` (`%APPDATA%\yarrtifacts\config.json` on Windows) and used automatically on every upload.
 `login status` checks it's still good; `login logout` forgets it.
 
-A token can only upload, replace, rename, delete, change the slug, or tighten the visibility of artifacts it owns.
-Tightening is one-way: a token can make an artifact password-protected or private, but only the dashboard
-can open one back up. Deleting is permanent and has no undo, so an agent should ask you before it does that.
+A token can only upload, replace, rename, delete, change the slug, or change the visibility of artifacts it owns.
+Visibility works in both directions: a token can lock an artifact down and open it back up again. An agent should
+ask you before it makes anything easier to see, and before it deletes anything, because a delete cannot be undone.
 Everything else, including domain setup, stays in the dashboard, where you can also revoke the token any time.
 
 **CI or no browser?** Create a token in the dashboard (**API tokens** → Create token) and set it as
@@ -98,7 +98,7 @@ node skills/publish/scripts/upload.mjs --delete <artifactId>
 
 Once a custom domain is active, the branded link comes back automatically (a domain still waiting on
 DNS gets skipped). If you have two or more, mark one as the primary in the dashboard and it's used
-automatically everywhere — nothing to set here. Or pick which one the CLI uses by default per-run:
+automatically everywhere — nothing to set here. Or save which one the CLI should use by default:
 
 ```bash
 node skills/publish/scripts/upload.mjs --default-domain <hostname>
@@ -155,4 +155,4 @@ Other agents have no artifact tool to intercept, so there the skill description 
 ## Limits
 
 200 files, 95 MB per file, 200 MB per bundle. Browser-viewable file types only (HTML, Markdown,
-code, text/data, images, SVG, fonts, PDF).
+code, text/data, images, SVG, fonts, PDF, audio, video, wasm).

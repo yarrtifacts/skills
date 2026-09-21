@@ -3,7 +3,7 @@
  * `login` subcommand for the publish skill (#52): connect this machine to a yarrtifacts.com account
  * without pasting a token. Requests a pairing code, opens the approve link in the browser, and once
  * the owner clicks Allow, stores the returned scoped token in ~/.config/yarrtifacts/config.json.
- * Node >= 18 (global fetch), zero dependencies.
+ * Node >= 20 (global fetch and crypto), zero dependencies.
  *
  * Usage: node login.mjs [--name <label>] [--api <origin>] [--no-open]
  *        node login.mjs status                 # is the stored token still valid?
@@ -22,6 +22,7 @@ function parseArgs(argv) {
     else if (v === "--api") a.api = argv[++i];
     else if (v === "--no-open") a.open = false;
     else if (v === "status" || v === "logout") a.cmd = v;
+    else if (v === "login") { /* the default; SKILL.md sends the word through as-is */ }
     else throw new LoginError("Unknown argument: " + v);
   }
   return a;
@@ -45,7 +46,11 @@ async function main() {
     try { rmSync(configPath()); console.log("Disconnected."); } catch { console.log("Nothing to disconnect."); }
     return;
   }
-  if (a.cmd === "status") { await doStatus(a.api); return; }
+  if (a.cmd === "status") {
+    // resolveAuth throws when --api names a server other than the one the saved token came from.
+    try { await doStatus(a.api); } catch (e) { console.error(e instanceof LoginError ? e.message : String(e)); process.exit(1); }
+    return;
+  }
 
   try {
     // login establishes a fresh pairing against --api (or prod); the resulting origin is saved so

@@ -35,12 +35,19 @@ export function readConfig() {
 export function resolveAuth(explicitApi) {
   const envToken = process.env.YARRTIFACTS_TOKEN;
   const cfg = readConfig();
-  const token = envToken || (cfg && typeof cfg.token === "string" && cfg.token ? cfg.token : null);
+  const cfgToken = cfg && typeof cfg.token === "string" && cfg.token ? cfg.token : null;
+  const cfgOrigin = cfg && typeof cfg.apiOrigin === "string" && cfg.apiOrigin ? cfg.apiOrigin.replace(/\/+$/, "") : DEFAULT_API_ORIGIN;
   let apiOrigin;
   if (explicitApi) apiOrigin = String(explicitApi).replace(/\/+$/, "");
-  else if (!envToken && cfg && typeof cfg.apiOrigin === "string" && cfg.apiOrigin) apiOrigin = cfg.apiOrigin;
+  else if (!envToken) apiOrigin = cfgOrigin;
   else apiOrigin = DEFAULT_API_ORIGIN;
-  return { token, apiOrigin };
+  // The saved token goes only to the server that minted it. An `--api` pointing anywhere else is
+  // exactly what a planted "re-run with --api https://…" line inside a document an agent was asked
+  // to publish would do to walk off with the credential, so it is refused rather than obeyed.
+  if (!envToken && cfgToken && apiOrigin !== cfgOrigin) {
+    throw new Error("The saved token was issued by " + cfgOrigin + " and will not be sent to " + apiOrigin + ". Run login against that server, or set YARRTIFACTS_TOKEN.");
+  }
+  return { token: envToken || cfgToken, apiOrigin };
 }
 
 /** Read-merge-write (#64): applies `patch` on top of whatever's on disk (or {} if none/unreadable),

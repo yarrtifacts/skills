@@ -2,7 +2,7 @@
  * Shared browser-opening for the publish skill (#75). Extracted from login.mjs so both `login`
  * (opens the pairing link) and `upload` (opens the published artifact) share one launcher, and so the
  * decision logic — which link, and whether to open at all — is pure and unit-testable with an
- * injected spawn. Node >= 18, zero dependencies. spawn/platform/env are injectable for tests;
+ * injected spawn. Node >= 20, zero dependencies. spawn/platform/env are injectable for tests;
  * production calls default them to the real Node globals.
  */
 import { spawn } from "node:child_process";

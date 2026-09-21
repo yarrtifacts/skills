@@ -47,12 +47,12 @@ export function validateArgs(args) {
   }
   if (args.edit) {
     if (args.replace || args.abandon || args.dir) {
-      throw new UploadError("--edit only combines with --title and/or --slug (it edits an existing artifact's metadata, no re-upload). Remove --replace, --abandon, or the folder path.");
+      throw new UploadError("--edit only combines with --title, --slug, --visibility and --default-domain (it edits an existing artifact's metadata, no re-upload). Remove --replace, --abandon, or the folder path.");
     }
     requireEditField(args.title, args.slug, args.defaultDomain !== undefined, args.visibility !== undefined);
     return;
   }
-  if (args.replace && (args.title || args.slug || args.abandon)) {
+  if (args.replace && (args.title !== undefined || args.slug !== undefined || args.abandon)) {
     throw new UploadError("--title, --slug and --abandon only apply when creating a new artifact. Remove them, or drop --replace.");
   }
 }
@@ -62,9 +62,8 @@ export function encodePath(rel) {
 }
 
 // ── Visibility (#83) ────────────────────────────────────────────────────────────────────────────
-// A token may only TIGHTEN an artifact (public → password → private) or rotate a share password in
-// place; the server enforces that and answers 403 "token scope" on a downgrade. We do not duplicate
-// the direction rule here — the server owns it, and a stale client copy would just drift.
+// A token moves an artifact in either direction. Opening one up is the agent's call to confirm with
+// the human first (SKILL.md); nothing here can know what the human said, so nothing here refuses.
 const VISIBILITIES = ["public", "password", "private"];
 
 /** True when `--edit` was given with ONLY `--visibility` (no title/slug/default-domain). Such an edit
@@ -101,8 +100,10 @@ export function generateSharePassword(length = 20) {
   return out.length === length ? out : out + generateSharePassword(length - out.length);
 }
 
-/** Set an artifact's visibility. Returns the server's resolved visibility, plus the password when one
- *  was applied — the CALLER prints it once so the human can pass it on; it is never persisted here. */
+/** Set an artifact's visibility. Returns the server's resolved visibility, the state it moved FROM
+ *  (`previous`, so the caller can say "private → public" and can tell a password rotation from a
+ *  first password), plus the password when one was applied — the CALLER prints it once so the human
+ *  can pass it on; it is never persisted here. */
 export async function setVisibility(opts, fetchImpl) {
   const { token, artifactId, visibility, password } = opts;
   const apiOrigin = normalizeOrigin(opts.apiOrigin);
@@ -115,7 +116,7 @@ export async function setVisibility(opts, fetchImpl) {
   const j = await request(fetchImpl, apiOrigin + "/api/artifacts/" + encodeURIComponent(artifactId) + "/visibility", {
     method: "POST", headers: authHeaders(token, true), body: JSON.stringify(body),
   });
-  return { visibility: j.visibility || visibility, ...(visibility === "password" ? { password } : {}) };
+  return { visibility: j.visibility || visibility, previous: j.previous, ...(visibility === "password" ? { password } : {}) };
 }
 
 /** Delete an artifact permanently. The link stops serving immediately and the content is wiped —

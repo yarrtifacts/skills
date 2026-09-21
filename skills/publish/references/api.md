@@ -3,17 +3,19 @@
 Base: `https://yarrtifacts.com`. Uploads carry `Authorization: Bearer <token>` — a personal access
 token (`yarr_pat_…`). Get one either from the **API tokens** tab, or via the `login` pairing flow
 below (which mints the same kind of token). Tokens can call the routes documented below (upload,
-replace, rename, slug-edit, delete, and visibility in the tightening direction only); anything else answers
+replace, rename, slug-edit, delete, and visibility in either direction); anything else answers
 `403 {"error":"token scope"}` (except the two read-only routes: `GET /api/tokens/whoami` and
 `GET /api/domains`).
 
 ## Visibility
 
 `POST /api/artifacts/{artifactId}/visibility` with `{"visibility":"public"|"password"|"private"}`,
-plus `"password":"…"` (min 8 chars) when setting `password`. A token may only move an artifact to an
-equal-or-stricter state — `public → password → private`, or a password rotation in place. A request
-that would widen access answers `403 {"error":"token scope"}` naming the dashboard; the row is not
-touched. The password is hashed server-side (PBKDF2) and never readable back.
+plus `"password":"…"` (min 8 chars) when setting `password`.
+→ `200 { "ok": true, "visibility": "<new>", "previous": "<old>" }`. A token moves an artifact in
+either direction; opening one up is the client's job to confirm with its user first. `previous` is
+how a client tells a password rotation (`password → password`, which invalidates the secret viewers
+already hold) from a first password. The password is hashed server-side (PBKDF2) and never readable
+back.
 
 **When creating**, call it between `init` and `finalize` if the artifact must never be public: it
 exists but serves nothing in that window, so the state is in place the moment the link goes live.
@@ -67,14 +69,15 @@ Content-Type: application/json
 
 { "manifest": [ { "relativePath": "index.html", "size": 1234 }, … ],
   "title": "My report",        // optional
-  "slug": "my-report" }        // optional; omit for a random link
+  "slug": "my-report",         // optional; omit for a random link
+  "abandon": "<artifactId>" }  // optional; reclaims your own draft left behind by a failed create
 ```
 
 → `200 { "artifactId": "…", "versionId": "…", "slug": "…" }`
 
 `size` must be the file's exact byte length — a PUT body materially larger than its declared
 size is rejected. All files must be browser-viewable types (pages, Markdown, code, text/data,
-images, SVG, fonts, PDF). Limits: 200 files, 95 MB per file, 200 MB per bundle.
+images, SVG, fonts, PDF, audio, video, wasm). Limits: 200 files, 95 MB per file, 200 MB per bundle.
 
 ## 2. Upload each file
 
@@ -164,7 +167,8 @@ absent). Show `message`, falling back to `error`, falling back to the HTTP statu
 | 401 | `invalid token` | Unknown or revoked token. |
 | 403 | `token scope` | Route outside the ones documented above. |
 | 400 | `bad manifest` / `bad entry` / `duplicate path: …` / `unsupported type: …` / `unsafe path: …` / `invalid slug` / `file too large` / `bundle too large` | Manifest problems at init (size caps checked against declared sizes return 400 here). |
-| 409 | `slug taken` / `entry` / `still processing` / `version not writable` / `replace conflict` / `not editable` / `changed` / `recently used` / `unavailable` / `rename conflict` | Conflicts; `entry` = no clear entry point (add index.html); the last five are rename/slug-edit conflicts. |
-| 413 | `file too large` / `size mismatch` / `bundle too large` | Upload-time caps: a PUT body over 95 MB or beyond its declared size; a finalize whose stored bundle exceeds 200 MB. |
+| 409 | `slug taken` / `entry` / `still processing` / `version not writable` / `replace conflict` / `not editable` / `changed` / `recently used` / `unavailable` / `rename conflict` / `conflict` | Conflicts; `entry` = no clear entry point (add index.html); `changed` through `rename conflict` are rename/slug-edit conflicts; `conflict` = the visibility moved while your call was in flight, call again. |
+| 413 | `file too large` / `size mismatch` / `bundle too large`, or `code: quota_exceeded` | Upload-time caps: a PUT body over 95 MB or beyond its declared size; a finalize whose stored bundle exceeds 200 MB. With `code: quota_exceeded` (init/replace) the account is out of storage and `error` is the sentence to show. |
+| 503 | `kv update failed` / `kv invalidation failed` | A transient storage fault; the row is unchanged or already correct. Retry once. |
 | 422 | `incomplete` | Some files never arrived; re-upload and finalize again. |
 | 429 | `rate limited` | Per-owner/IP budget; honor `retry-after`. |

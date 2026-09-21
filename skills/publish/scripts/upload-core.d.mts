@@ -109,7 +109,7 @@ export function generateSharePassword(length?: number): string;
 export function setVisibility(
   opts: { apiOrigin: string; token: string; artifactId: string; visibility: Visibility; password?: string },
   fetchImpl: (url: string, init?: RequestInit) => Promise<Response>,
-): Promise<{ visibility: Visibility; password?: string }>;
+): Promise<{ visibility: Visibility; previous?: Visibility; password?: string }>;
 
 /** Permanent, no undo: the link stops serving and the content is wiped. Owner-scoped server-side. */
 export function deleteArtifact(

@@ -61,8 +61,8 @@ const TRUTHY = new Set(["1", "true", "yes", "on"]);
  *  Data, not prose, because `npm run check:artifact-tools` compares the live tool list against
  *  KNOWN_TOOLS = these keys plus READ_ONLY_ACTIONS', and a family member in neither is the drift.
  *  The actions are recorded too: "no opinion" is a judgement about THESE actions, so a passed-through
- *  tool that grows one has to reach a human the same way a new tool does -- decide() lets every call
- *  to it straight through, which is exactly why a new action here is the quiet version of the drift. */
+ *  tool that grows one has to reach a human the same way a new tool does. decide() lets these
+ *  actions through and denies any other, so a new one is refused rather than waved by until then. */
 export const PASSED_THROUGH = {
   ArtifactCheck: {
     actions: new Set(["verify", "preview"]),
@@ -124,9 +124,16 @@ export function decide(payload, env = {}) {
   // function instead of slipping past a matcher nobody remembered to update -- so THIS is the line
   // that keeps the hook from denying something it has no opinion about.
   const tool = p && typeof p.tool_name === "string" ? p.tool_name : null;
-  if (tool !== null && !Object.prototype.hasOwnProperty.call(READ_ONLY_ACTIONS, tool)) return null;
-
   const input = p && typeof p.tool_input === "object" && p.tool_input !== null ? /** @type {Record<string, unknown>} */ (p.tool_input) : null;
+
+  // A passed-through tool is let by only for the actions somebody read. The release gate can only
+  // see the tools the releasing session has, and ArtifactCheck is enabled per session, so a
+  // publishing action added to it could reach customers with no release ever noticing. Anything
+  // beyond the recorded actions falls through to the deny below, like an unknown action anywhere.
+  const passed = tool !== null && Object.prototype.hasOwnProperty.call(PASSED_THROUGH, tool) ? PASSED_THROUGH[tool] : null;
+  if (passed) {
+    if (input && typeof input.action === "string" && passed.actions.has(input.action)) return null;
+  } else if (tool !== null && !Object.prototype.hasOwnProperty.call(READ_ONLY_ACTIONS, tool)) return null;
 
   // A payload with no readable tool_name gets no read allowance at all: it reached a matcher that
   // only fires on these tools, so it is one of them with the name lost, and guessing which would be

@@ -215,7 +215,7 @@ async function main() {
       }
       const out = await editArtifact({ apiOrigin, token, artifactId: a.edit, title: a.title, slug: a.slug, ...domainOpts }, fetch);
       if (out.configPatch) updateConfig(out.configPatch);
-      if (out.url && out.published === false) console.error("Note: this artifact is unpublished, so the new link is dormant. Publish it in the dashboard to make it live.");
+      if (out.url && out.published === false) console.error("Note: this artifact is unpublished, so the new link is dormant. Publish it in the dashboard to make it live (a free link that has expired needs a plan first).");
       // artifactId first, then: a title-only edit has no URL (last lines stay "artifactId: …"); a
       // slug change prints every resolved link — subdomain, path, and branded if one resolved.
       console.log("artifactId: " + out.artifactId);
@@ -254,7 +254,7 @@ async function main() {
     const out = await uploadFiles({ apiOrigin, token, files, title: a.title, slug: a.slug, replace: a.replace, abandon: a.abandon, ...gateNow, ...domainOpts }, fetch);
     publishedArtifactId = out.artifactId;
     if (out.configPatch) updateConfig(out.configPatch);
-    if (!out.published) console.error("Note: this artifact is unpublished, so the link is dormant. Publish it in the dashboard to make it live.");
+    if (!out.published) console.error("Note: this artifact is unpublished, so the link is dormant. Publish it in the dashboard to make it live (a free link that has expired needs a plan first).");
     // artifactId first (agents remember it for --replace), then every resolved link — subdomain,
     // path, and branded custom-domain if one resolved this run.
     console.log("artifactId: " + out.artifactId);

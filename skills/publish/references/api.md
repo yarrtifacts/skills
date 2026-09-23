@@ -166,6 +166,7 @@ absent). Show `message`, falling back to `error`, falling back to the HTTP statu
 |---|---|---|
 | 401 | `invalid token` | Unknown or revoked token. |
 | 403 | `token scope` | Route outside the ones documented above. |
+| 403 | `artifact limit` (`code: artifact_limit`) | Init or the first finalize on a free account whose one publication is spent. Deleting an artifact does not give it back; replace still works. |
 | 400 | `bad manifest` / `bad entry` / `duplicate path: …` / `unsupported type: …` / `unsafe path: …` / `invalid slug` / `file too large` / `bundle too large` | Manifest problems at init (size caps checked against declared sizes return 400 here). |
 | 409 | `slug taken` / `entry` / `still processing` / `version not writable` / `replace conflict` / `not editable` / `changed` / `recently used` / `unavailable` / `rename conflict` / `conflict` | Conflicts; `entry` = no clear entry point (add index.html); `changed` through `rename conflict` are rename/slug-edit conflicts; `conflict` = the visibility moved while your call was in flight, call again. |
 | 413 | `file too large` / `size mismatch` / `bundle too large`, or `code: quota_exceeded` | Upload-time caps: a PUT body over 95 MB or beyond its declared size; a finalize whose stored bundle exceeds 200 MB. With `code: quota_exceeded` (init/replace) the account is out of storage and `error` is the sentence to show. |

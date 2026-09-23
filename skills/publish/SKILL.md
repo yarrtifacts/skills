@@ -6,7 +6,7 @@ license: MIT
 compatibility: Requires network access and Node.js 20+ (for the bundled script) or any HTTP client (curl works — see references/api.md).
 metadata:
   author: yarrtifacts
-  version: "0.16.1"
+  version: "0.17.0"
 ---
 
 # Publish an artifact to yarrtifacts.com
@@ -205,6 +205,7 @@ user as-is. If a create failed partway, stderr also names the leftover draft's i
 |---|---|
 | 401 | Token invalid or revoked. Run `login` again to reconnect (or set a fresh `YARRTIFACTS_TOKEN`). |
 | 403 "token scope" | This token can only upload, replace, rename, delete, change the slug, or change the visibility of artifacts it owns. Anything else needs the dashboard. |
+| 403 "artifact limit" | The free plan's one publication is used, and deleting doesn't give it back. Don't retry; tell the user a plan is needed to publish more. Replacing their existing artifact still works. |
 | 409 "slug taken" | Pick another `--slug`, or omit it. |
 | 413 | A file is over 95 MB, the bundle is over 200 MB, a file grew after upload started, or (`code: quota_exceeded`) the account is out of storage. Tell the user which one; only the first three are fixed by shrinking files. |
 | 503 | The server could not finish the write. Retry once; on a create, add the `--abandon <id>` stderr named. |
@@ -214,6 +215,8 @@ user as-is. If a create failed partway, stderr also names the leftover draft's i
 ## Limits
 
 Up to 200 files, 95 MB per file, 200 MB per bundle. Only browser-viewable file types (pages, Markdown, code, text/data, images, SVG, fonts, PDF, audio, video, wasm).
+
+On the free plan an account publishes one artifact, and its link goes offline 72 hours after the first publish. The artifact and its address are kept; bringing the link back needs a plan. Replacing the artifact keeps the same deadline.
 
 ## Wire protocol
 

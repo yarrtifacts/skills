@@ -83,8 +83,9 @@ export const READ_ONLY_ACTIONS = {
   // whole reason to exist arriving under a different tool name. get/list/query are its three reads
   // and all three are here; `query` was briefly held back because a `where` value is sent to the
   // server, until the same was true of `list`'s cursor and of the collection path itself — which is
-  // the egress question this hook does not answer. See the header.
-  ArtifactData: new Set(["get", "list", "query"]),
+  // the egress question this hook does not answer. See the header. `profiles` (September 2026)
+  // takes only `url` and person `ids` and returns their display names: a read like the other three.
+  ArtifactData: new Set(["get", "list", "query", "profiles"]),
 };
 
 /** The other half of the same ledger: actions looked at and judged to WRITE. All but one are denied

@@ -6,7 +6,7 @@ license: MIT
 compatibility: Requires network access and Node.js 20+ (for the bundled script) or any HTTP client (curl works — see references/api.md).
 metadata:
   author: yarrtifacts
-  version: "0.17.1"
+  version: "0.17.2"
 ---
 
 # Publish an artifact to yarrtifacts.com
@@ -215,6 +215,8 @@ user as-is. If a create failed partway, stderr also names the leftover draft's i
 ## Limits
 
 Up to 200 files, 95 MB per file, 200 MB per bundle. Only browser-viewable file types (pages, Markdown, code, text/data, images, SVG, fonts, PDF, audio, video, wasm).
+
+HTML bundles can also include Pagefind search data (`.pf_meta`, `.pf_index`, `.pf_fragment`, `.pf_filter`, `.pagefind`). These files cannot be published alone.
 
 On the free plan an account publishes one artifact, and its link goes offline 72 hours after the first publish. The artifact and its address are kept; bringing the link back needs a plan. Replacing the artifact keeps the same deadline.
 

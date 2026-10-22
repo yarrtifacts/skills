@@ -156,3 +156,5 @@ Other agents have no artifact tool to intercept, so there the skill description 
 
 200 files, 95 MB per file, 200 MB per bundle. Browser-viewable file types only (HTML, Markdown,
 code, text/data, images, SVG, fonts, PDF, audio, video, wasm).
+
+HTML bundles can also include Pagefind search data (`.pf_meta`, `.pf_index`, `.pf_fragment`, `.pf_filter`, `.pagefind`). These files cannot be published alone.

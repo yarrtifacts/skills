@@ -79,6 +79,8 @@ Content-Type: application/json
 size is rejected. All files must be browser-viewable types (pages, Markdown, code, text/data,
 images, SVG, fonts, PDF, audio, video, wasm). Limits: 200 files, 95 MB per file, 200 MB per bundle.
 
+HTML bundles can also include Pagefind search data (`.pf_meta`, `.pf_index`, `.pf_fragment`, `.pf_filter`, `.pagefind`). These files cannot be published alone.
+
 ## 2. Upload each file
 
 ```

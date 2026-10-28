@@ -1,7 +1,7 @@
 # yarrtifacts.com upload API
 
 Base: `https://yarrtifacts.com`. Uploads carry `Authorization: Bearer <token>` — a personal access
-token (`yarr_pat_…`). Get one either from the **API tokens** tab, or via the `login` pairing flow
+token (`yarr_pat_…`). Get one either from the **Agents & tokens** tab, or via the `login` pairing flow
 below (which mints the same kind of token). Tokens can call the routes documented below (upload,
 replace, rename, slug-edit, delete, and visibility in either direction); anything else answers
 `403 {"error":"token scope"}` (except the two read-only routes: `GET /api/tokens/whoami` and

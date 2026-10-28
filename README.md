@@ -5,7 +5,26 @@ Lets an AI agent (Claude Code, Codex CLI, Gemini CLI, Cursor, and anything else 
 on [yarrtifacts.com](https://yarrtifacts.com) and hand back the link. It can also push a new
 version of an already published artifact, so the link you shared keeps working.
 
-## Connect your account
+## ChatGPT
+
+Connect Yarrtifacts from [ChatGPT Plugins](https://chatgpt.com/plugins). This manual setup is available while the public directory listing is pending; your ChatGPT account or workspace must allow custom MCP servers.
+
+1. Open Plugins, select **+**, then **Add custom MCP server**.
+2. Enter **Yarrtifacts** as the name and `https://yarrtifacts.com/mcp` as the server URL. Choose **OAuth**. Leave the client ID and secret empty for automatic registration.
+3. Review the warning and create the plugin. Connect your account, sign in to Yarrtifacts if asked, and allow publishing access.
+4. Start a new ChatGPT chat, select Yarrtifacts, and ask it to publish a complete HTML or Markdown document. Open the returned link to check the page.
+
+For example: "Publish this complete document and give me the link: # Project brief".
+
+The ChatGPT connection publishes one document per call. New pages are public to anyone with the link. To update a page, provide its link name and the complete replacement document; the previous version may be removed. Manage access and delete pages in the [dashboard](https://yarrtifacts.com/).
+
+### Desktop package (preview)
+
+[Download the latest desktop ZIP](https://github.com/yarrtifacts/skills/releases/latest/download/yarrtifacts-chatgpt-plugin.zip). The download is public and does not require a GitHub account.
+
+If your desktop client offers plugin import, upload the ZIP without unpacking it, then connect your Yarrtifacts account. Importing the package does not establish availability in ordinary ChatGPT Chat. For Chat, use the custom MCP connection above. The package contains a server address and OAuth settings, with no personal credentials.
+
+## Connect your agent account
 
 Run `login`. It opens a page in your browser, you click Allow, and it saves a token locally. No
 copy-pasting.
@@ -22,7 +41,7 @@ Visibility works in both directions: a token can lock an artifact down and open 
 ask you before it makes anything easier to see, and before it deletes anything, because a delete cannot be undone.
 Everything else, including domain setup, stays in the dashboard, where you can also revoke the token any time.
 
-**CI or no browser?** Create a token in the dashboard (**API tokens** → Create token) and set it as
+**CI or no browser?** Create a token in the dashboard (**Agents & tokens** → Create token) and set it as
 an environment variable — it takes precedence over the saved login:
 
 ```bash

@@ -6,7 +6,7 @@ license: MIT
 compatibility: Requires network access and Node.js 20+ (for the bundled script) or any HTTP client (curl works — see references/api.md).
 metadata:
   author: yarrtifacts
-  version: "0.17.2"
+  version: "0.17.3"
 ---
 
 # Publish an artifact to yarrtifacts.com
@@ -59,7 +59,7 @@ node "<path-to-this-skill>/scripts/login.mjs"
 - `node login.mjs status` checks whether the saved token still works; `node login.mjs logout` forgets it.
 
 **Fallback (CI / no browser):** set `YARRTIFACTS_TOKEN` to a token created in the dashboard
-(**API tokens** → Create token). The env var takes precedence over the saved config.
+(**Agents & tokens** → Create token). The env var takes precedence over the saved config.
 
 ## Publish
 
